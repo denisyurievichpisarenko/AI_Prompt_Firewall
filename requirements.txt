@@ -1,0 +1,8 @@
+jinja2
+fastapi
+ollama
+pydantic
+pytest
+pytest-asyncio
+python-multipart
+uvicorn
