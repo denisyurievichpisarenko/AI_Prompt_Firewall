@@ -6,7 +6,6 @@ import ollama
 
 from app.schemas import SecurityRequest, SecurityResponse, ShieldMetrics
 
-
 class SecurityGatewayService:
     def __init__(self):
         # Compiled regex patterns for high-speed PII scanning
@@ -64,7 +63,11 @@ class SecurityGatewayService:
                     {"role": "system", "content": system_instruction},
                     {"role": "user", "content": f"Analyze this input: {text}"}
                 ],
-                options={"temperature": 0.0}  # Lock down creativity for security evaluation
+                options={
+                    "temperature": 0.0,   # Locks down creativity for security evaluation
+                    "num_predict": 15,    # Cuts off the model immediately after it outputs the JSON structure
+                    "num_ctx": 2048       # Limits the context window to drop the usage down
+                }
             )
             return json.loads(response['message']['content'])
         except Exception:
