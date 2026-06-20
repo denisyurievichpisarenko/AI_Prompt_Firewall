@@ -1,0 +1,52 @@
+name: Guardrails CI Security Test Suite
+
+# 1. Trigger this workflow on every git push or pull request to the main branch
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Clone your repository code onto the GitHub runner machine
+    - name: Check out repository code
+      uses: actions/checkout@v4
+
+    # Step 2: Set up Python environment
+    - name: Set up Python 3.14
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.14'
+        cache: 'pip' # Automatically caches dependencies to make future runs faster
+
+    # Step 3: Install project dependencies
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install fastapi uvicorn pydantic pytest pytest-asyncio httpx jinja2 python-multipart ollama
+
+    # Step 4: Download and run Ollama in the background of the Linux runner
+    - name: Install and Start Ollama Engine
+      run: |
+        # Download and install Ollama via the official Linux script
+        curl -fsSL https://ollama.com/install.sh | sh
+        
+        # Start Ollama in the background and pipe its logs to a file
+        ollama serve > ollama.log 2>&1 &
+        
+        # Give the background engine 10 seconds to fully initialize
+        sleep 10
+
+    # Step 5: Pull the specific Llama 3 model weights needed for the tests
+    - name: Pull Llama3 Model Weights
+      run: |
+        ollama pull llama3
+
+    # Step 6: Execute the Pytest suite
+    - name: Run Test Suite Matrix
+      run: |
+        python -m pytest -v
